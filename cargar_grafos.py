@@ -1,63 +1,53 @@
-import grafo_cat
+from grafo import Grafo
 
 def leer_linea(archivo):
     linea = archivo.readline()
     return linea.strip().split("\t") if linea else None
 
-def tsv_reader(archivo, grafo, playlists,usuarios):
-    tsv = open(archivo)
-    linea = leer_linea(tsv)
+def tsv_reader(ruta, grafo, playlists,usuarios,canciones):
+    archivo = open(ruta,"r")
+    linea = leer_linea(archivo)
     while linea:
- 
-        cancion = [linea[2],linea[3],linea[4]]
-        if not linea[1] in grafo.vertices():
-            grafo.agregar_vertice(linea[1])
-        if not cancion in grafo.vertices():
-            grafo.agregar_vertice(cancion)
-        if not grafo.estan_unidos(linea[1], cancion):
-            grafo.agregar_arista(linea[1], cancion)
-        if not playlists[linea[4]]:
-            playlists[linea[4]] = []
-        if linea[2] not in playlists[linea[4]]:
-            playlists[linea[4]].append(linea[2])
-        if not usuarios[linea[4]]:
-            usuarios[linea[4]] = []
-        if linea[1] not in usuarios[linea[4]]:
-            usuarios[linea[4]].append(linea[1])
-        linea = leer_linea(tsv)
+        cancion = " - ".join((linea[2], linea[3]))
+        if not grafo.pertenece(linea[1]):
+            grafo.insertar_vertice(linea[1])
+        if not grafo.pertenece(cancion):
+            grafo.insertar_vertice(cancion)
+        if not grafo.es_adyacente(linea[1], cancion):
+            grafo.insertar_arista(linea[1], cancion,linea[5])
+        
+        if linea[5] not in playlists:
+            playlists[linea[5]] = []
+        if cancion not in playlists[linea[5]]:
+            playlists[linea[5]].append(cancion)
+        if linea[5] not in usuarios:
+            usuarios[linea[5]] =linea[1]
+        if linea[2]:
+            canciones[cancion] = True
+        linea = leer_linea(archivo)
+    archivo.close()
     
 
 def crear_grafo_usuarios(archivo):
     usuarios = Grafo()
     playlists = {}
+    canciones = {}
     usuarios_playlist = {}
-    tsv_reader(archivo, usuarios, playlists,usuarios_playlist)
-    return usuarios, playlists,usuarios_playlist
+    tsv_reader(archivo, usuarios, playlists,usuarios_playlist,canciones)
+    return usuarios, playlists,usuarios_playlist,canciones
 
 def crear_grafo_canciones(playlists):
+
     canciones = Grafo()
-
-    for playlist in playlists:
-        for j in range(len(playlist)-1):
-            for i in range(i+1,len(playlist)):
-                cancion1 = playlist[i]
-                cancion2 = playlist[j]
+    for _,lista_canciones in playlists.items():
+        for j in range(len(lista_canciones)-1):
+            cancion2 = lista_canciones[j]
+            if not canciones.validar_vertice(cancion2):
+                canciones.insertar_vertice(cancion2)
+            for i in range(j+1,len(lista_canciones)):
+                cancion1 = lista_canciones[i]
                 if not canciones.validar_vertice(cancion1):
-                    canciones.agregar_vertice(cancion1)
-                if not canciones.validar_vertice(cancion2):
-                    canciones.agregar_vertice(cancion2)
-                if not canciones.estan_unidos(cancion1,cancion2):
-                    canciones.agregar_arista(cancion1,cancion2)
+                    canciones.insertar_vertice(cancion1)
+                if not canciones.es_adyacente(cancion1,cancion2):
+                    canciones.insertar_arista(cancion1,cancion2)
     return canciones
-
-
-
-
-
-"""
-"USER_ID": linea[1],
-"TRACK_NAME": linea[2],
-"ARTIST": linea[3],
-"PLAYLIST_ID": linea[4],
-"PLAYLIST_NAME": linea[5],
-"GENRES": linea[6]"""
